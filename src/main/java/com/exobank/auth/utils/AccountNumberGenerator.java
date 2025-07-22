@@ -1,21 +1,22 @@
 package com.exobank.auth.utils;
 
-import java.util.concurrent.ThreadLocalRandom;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.exobank.auth.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import com.exobank.auth.repository.UserRepository;
+import java.util.Random;
 
 @Component
+@RequiredArgsConstructor
 public class AccountNumberGenerator {
-    @Autowired private UserRepository userRepository;
 
-    public String next() {
-        String acc;
+    private final UserRepository userRepository;
+
+    public String generate() {
+        String accountNumber;
         do {
-            acc = String.format("%010d", ThreadLocalRandom.current().nextInt(1_000_000_000));
-        } while (userRepository.existsByAccountNumber(acc));
-        return acc;
+            accountNumber = "3" + String.format("%09d", new Random().nextInt(1_000_000_000));
+        } while (userRepository.existsByAccountNumber(accountNumber));
+        return accountNumber;
     }
 }

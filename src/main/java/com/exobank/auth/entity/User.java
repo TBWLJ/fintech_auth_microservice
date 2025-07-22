@@ -30,7 +30,9 @@ public class User {
 
     private String bvn;
     private String nin;
+    private boolean isAdmin;
     private boolean verified = false;
     private String role = "USER";
     private LocalDateTime createdAt = LocalDateTime.now();
+
 }
