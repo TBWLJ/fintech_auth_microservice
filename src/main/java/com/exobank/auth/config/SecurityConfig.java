@@ -1,6 +1,6 @@
 package com.exobank.auth.config;
 
-import com.exobank.auth.service.CustomUserDetailsService;
+// import com.exobank.auth.service.CustomUserDetailsService;
 import com.exobank.auth.utils.JwtAuthFilter;
 
 import lombok.RequiredArgsConstructor;

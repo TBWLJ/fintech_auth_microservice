@@ -7,7 +7,7 @@ import com.exobank.auth.repository.RefreshTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.repository.CrudRepository;
+// import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -22,7 +22,7 @@ public class RefreshTokenService {
     private final RefreshTokenRepository repo;
 
     // 7‑day validity
-    private static final long REFRESH_EXP_DAYS = 7;
+    // private static final long REFRESH_EXP_DAYS = 7;
 
     public RefreshToken createRefreshToken(User user, HttpServletRequest request) {
         RefreshToken token = new RefreshToken();

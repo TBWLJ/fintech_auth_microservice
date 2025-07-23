@@ -1,7 +1,7 @@
 package com.exobank.auth.service;
 
 import com.exobank.auth.entity.Otp;
-import com.exobank.auth.entity.User;
+// import com.exobank.auth.entity.User;
 import com.exobank.auth.repository.OtpRepository;
 import com.exobank.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
