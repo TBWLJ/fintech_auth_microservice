@@ -2,13 +2,18 @@ package com.exobank.auth.controller;
 
 import com.exobank.auth.dto.LoginRequest;
 import com.exobank.auth.dto.RegisterRequest;
+import com.exobank.auth.dto.SessionInfo;
 import com.exobank.auth.entity.RefreshToken;
 import com.exobank.auth.entity.User;
 import com.exobank.auth.repository.UserRepository;
 import com.exobank.auth.service.OtpService;
 import com.exobank.auth.utils.AccountNumberGenerator;
 import com.exobank.auth.utils.JwtUtils;
+import com.exobank.auth.repository.RefreshTokenRepository;
 import com.exobank.auth.service.RefreshTokenService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -18,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -32,6 +38,7 @@ public class AuthController {
     private final JwtUtils jwtUtils;
     private final OtpService otpService;
     private final RefreshTokenService refreshTokenService;
+    private final RefreshTokenRepository refreshTokenRepository;
     
 
     @PostMapping("/register")
@@ -58,7 +65,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest servletRequest) {
         Authentication auth = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
@@ -71,20 +78,13 @@ public class AuthController {
                     .body("Please verify your email or phone number using the OTP sent.");
         }
 
-        String token = jwtUtils.generateToken(
-            user.getId().toString(),
-            user.getEmail(),
-            user.isAdmin()
-        );
+        String accessToken = jwtUtils.generateToken(user.getId().toString(), user.getEmail(), user.isAdmin());
+        String refreshToken = refreshTokenService.createRefreshToken(user, servletRequest).getToken();
 
-        String refreshToken = refreshTokenService.create(user).getToken();
-
-        return ResponseEntity.ok(
-            Map.ofEntries(
-                Map.entry("token", token),
-                Map.entry("refreshToken", refreshToken)
-            )
-        );
+        return ResponseEntity.ok(Map.of(
+            "accessToken", accessToken,
+            "refreshToken", refreshToken
+        ));
     }
 
     @PostMapping("/refresh")
@@ -98,7 +98,7 @@ public class AuthController {
 
             // 🌟 Rotate refresh token (optional but recommended)
             refreshTokenService.revoke(rt);
-            String newRefresh = refreshTokenService.create(user).getToken();
+            String newRefresh = refreshTokenService.createRefreshToken(user, null).getToken();
 
             return ResponseEntity.ok(
                 Map.of("accessToken", newAccess, "refreshToken", newRefresh)
@@ -115,5 +115,33 @@ public class AuthController {
                 refreshTokenService.verify(refreshToken)
         );
         return ResponseEntity.ok("Logged out");
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<?> getSessions(Authentication authentication) {
+        String userId = (String) authentication.getPrincipal();
+
+        List<SessionInfo> sessions = refreshTokenRepository
+            .findByUser_Id(Long.valueOf(userId))
+            .stream()
+            .map(token -> {
+                SessionInfo info = new SessionInfo();
+                info.setId(token.getId());
+                info.setIpAddress(token.getIpAddress());
+                info.setUserAgent(token.getUserAgent());
+                info.setCreatedAt(token.getCreatedAt());
+                info.setExpiryDate(token.getExpiryDate());
+                return info;
+            })
+            .toList();
+
+        return ResponseEntity.ok(sessions);
+    }
+
+    @DeleteMapping("/logout/all-sessions")
+    public ResponseEntity<?> logoutAll(Authentication authentication) {
+        String userId = (String) authentication.getPrincipal();
+        refreshTokenRepository.deleteByUser_Id(Long.valueOf(userId));
+        return ResponseEntity.ok("Logged out from all devices.");
     }
 }

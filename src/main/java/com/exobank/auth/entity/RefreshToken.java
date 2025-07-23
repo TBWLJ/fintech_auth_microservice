@@ -2,6 +2,8 @@ package com.exobank.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity @Data @NoArgsConstructor @AllArgsConstructor
@@ -20,4 +22,15 @@ public class RefreshToken {
 
     private LocalDateTime expiresAt;
     private boolean revoked = false;
+
+    private Instant expiryDate;
+
+    private String ipAddress;
+
+    private String userAgent;
+
+    @Column(nullable = false)
+    
+    private Instant createdAt = Instant.now();
+
 }
