@@ -110,7 +110,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestParam String refreshToken) {
-        refreshTokenService.verify(refreshToken);   // throws if invalid
+        refreshTokenService.verify(refreshToken);
         refreshTokenService.revoke(
                 refreshTokenService.verify(refreshToken)
         );
