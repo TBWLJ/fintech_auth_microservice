@@ -1,5 +1,63 @@
 package com.exobank.auth.service;
 
+import com.exobank.auth.entity.Otp;
+import com.exobank.auth.entity.User;
+import com.exobank.auth.repository.OtpRepository;
+import com.exobank.auth.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.Random;
+
+@Service
+@RequiredArgsConstructor
 public class OtpService {
-    
+
+    private final OtpRepository otpRepository;
+    private final UserRepository userRepository;
+
+    public String generateOtp(String email) {
+        // Check if OTP was sent recently
+        Optional<Otp> existingOtp = otpRepository.findTopByEmailOrderByCreatedAtDesc(email);
+        if (existingOtp.isPresent()) {
+            Otp lastOtp = existingOtp.get();
+            if (lastOtp.getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(60))) {
+                throw new RuntimeException("Please wait at least 1 minute before requesting another OTP");
+            }
+        }
+
+        String otpCode = String.format("%06d", new Random().nextInt(999999));
+
+        Otp otp = new Otp();
+        otp.setEmail(email);
+        otp.setCode(otpCode);
+        otp.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+        otp.setCreatedAt(LocalDateTime.now());
+
+        otpRepository.save(otp);
+
+        System.out.println("OTP for " + email + " is " + otpCode);
+
+        return otpCode;
+    }
+
+    public boolean verifyOtp(String email, String code) {
+        Optional<Otp> latestOtp = otpRepository.findTopByEmailOrderByCreatedAtDesc(email);
+
+        if (latestOtp.isEmpty()) return false;
+
+        Otp otp = latestOtp.get();
+        if (!otp.getCode().equals(code)) return false;
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) return false;
+
+        // mark user as verified
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setVerified(true);
+            userRepository.save(user);
+        });
+
+        return true;
+    }
 }
