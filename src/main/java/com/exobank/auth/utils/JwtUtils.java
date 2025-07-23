@@ -13,7 +13,7 @@ public class JwtUtils {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private final long EXPIRATION_TIME = 86400000; // 1 day
+    private final long EXPIRATION_TIME = 15 * 60 * 1000;; // 15 min life span
 
     public String generateToken(String userId, String email, boolean isAdmin) {
         return JWT.create()

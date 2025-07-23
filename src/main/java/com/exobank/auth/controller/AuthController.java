@@ -2,11 +2,14 @@ package com.exobank.auth.controller;
 
 import com.exobank.auth.dto.LoginRequest;
 import com.exobank.auth.dto.RegisterRequest;
+import com.exobank.auth.entity.RefreshToken;
 import com.exobank.auth.entity.User;
 import com.exobank.auth.repository.UserRepository;
 import com.exobank.auth.service.OtpService;
 import com.exobank.auth.utils.AccountNumberGenerator;
 import com.exobank.auth.utils.JwtUtils;
+import com.exobank.auth.service.RefreshTokenService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +31,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final OtpService otpService;
+    private final RefreshTokenService refreshTokenService;
+    
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
@@ -72,6 +77,43 @@ public class AuthController {
             user.isAdmin()
         );
 
-        return ResponseEntity.ok(Map.of("token", token));
+        String refreshToken = refreshTokenService.create(user).getToken();
+
+        return ResponseEntity.ok(
+            Map.ofEntries(
+                Map.entry("token", token),
+                Map.entry("refreshToken", refreshToken)
+            )
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestParam String refreshToken) {
+        try {
+            RefreshToken rt = refreshTokenService.verify(refreshToken);
+
+            User user = rt.getUser();
+            String newAccess = jwtUtils.generateToken(
+                    user.getId().toString(), user.getEmail(), user.isAdmin());
+
+            // 🌟 Rotate refresh token (optional but recommended)
+            refreshTokenService.revoke(rt);
+            String newRefresh = refreshTokenService.create(user).getToken();
+
+            return ResponseEntity.ok(
+                Map.of("accessToken", newAccess, "refreshToken", newRefresh)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestParam String refreshToken) {
+        refreshTokenService.verify(refreshToken);   // throws if invalid
+        refreshTokenService.revoke(
+                refreshTokenService.verify(refreshToken)
+        );
+        return ResponseEntity.ok("Logged out");
     }
 }
