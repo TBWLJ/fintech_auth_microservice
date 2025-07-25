@@ -1,6 +1,7 @@
 package com.exobank.auth.controller;
 
 import com.exobank.auth.service.OtpService;
+import com.exobank.auth.dto.VerifyRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +20,8 @@ public class OtpController {
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<String> verifyOtp(@RequestParam String email, @RequestParam String code) {
-        boolean valid = otpService.verifyOtp(email, code);
+    public ResponseEntity<String> verifyOtp(@RequestBody VerifyRequest request) {
+        boolean valid = otpService.verifyOtp(request.getEmail(), request.getCode());
         if (valid) return ResponseEntity.ok("OTP verified");
         else return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired OTP");
     }

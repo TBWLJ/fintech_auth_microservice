@@ -21,6 +21,7 @@ public class RefreshToken {
     private User user;
 
     private LocalDateTime expiresAt;
+
     private boolean revoked = false;
 
     private Instant expiryDate;

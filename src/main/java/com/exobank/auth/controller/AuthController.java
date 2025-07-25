@@ -48,8 +48,8 @@ public class AuthController {
         }
 
         User user = new User();
-        user.setFirstName(req.getFirstname());
-        user.setLastName(req.getLastname());
+        user.setFirstName(req.getFirstName());
+        user.setLastName(req.getLastName());
         user.setEmail(req.getEmail());
         user.setPhone(req.getPhone());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
@@ -83,7 +83,14 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of(
             "accessToken", accessToken,
-            "refreshToken", refreshToken
+            "refreshToken", refreshToken,
+            "user", Map.of(
+                "id", user.getId(),
+                "email", user.getEmail(),
+                "firstName", user.getFirstName(),
+                "lastName", user.getLastName(),
+                "accountNumber", user.getAccountNumber()
+            )
         ));
     }
 
@@ -96,7 +103,7 @@ public class AuthController {
             String newAccess = jwtUtils.generateToken(
                     user.getId().toString(), user.getEmail(), user.isAdmin());
 
-            // 🌟 Rotate refresh token (optional but recommended)
+            // Rotate refresh token
             refreshTokenService.revoke(rt);
             String newRefresh = refreshTokenService.createRefreshToken(user, null).getToken();
 
@@ -143,5 +150,21 @@ public class AuthController {
         String userId = (String) authentication.getPrincipal();
         refreshTokenRepository.deleteByUser_Id(Long.valueOf(userId));
         return ResponseEntity.ok("Logged out from all devices.");
+    }
+
+    @PutMapping("/update-profile")
+    public ResponseEntity<?> updateProfile(@RequestBody RegisterRequest req, Authentication authentication) {
+        String userId = (String) authentication.getPrincipal();
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFirstName(req.getFirstName());
+        user.setLastName(req.getLastName());
+        user.setEmail(req.getEmail());
+        user.setPhone(req.getPhone());
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setBvn(req.getBvn()); 
+        userRepository.save(user);
+        return ResponseEntity.ok("Profile updated successfully.");
     }
 }

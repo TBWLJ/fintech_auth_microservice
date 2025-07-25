@@ -44,18 +44,32 @@ public class OtpService {
     }
 
     public boolean verifyOtp(String email, String code) {
+        System.out.println("Verifying OTP for email: " + email + " and code: " + code);
+
         Optional<Otp> latestOtp = otpRepository.findTopByEmailOrderByCreatedAtDesc(email);
 
-        if (latestOtp.isEmpty()) return false;
+        if (latestOtp.isEmpty()) {
+            System.out.println("No OTP found for email");
+            return false;
+        }
 
         Otp otp = latestOtp.get();
-        if (!otp.getCode().equals(code)) return false;
-        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) return false;
+        System.out.println("Found OTP in DB: " + otp.getCode());
 
-        // mark user as verified
+        if (!otp.getCode().equals(code)) {
+            System.out.println("OTP code mismatch");
+            return false;
+        }
+
+        if (otp.getExpiresAt().isBefore(LocalDateTime.now())) {
+            System.out.println("OTP expired");
+            return false;
+        }
+
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setVerified(true);
             userRepository.save(user);
+            System.out.println("User marked as verified");
         });
 
         return true;
