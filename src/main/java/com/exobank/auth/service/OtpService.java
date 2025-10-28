@@ -1,15 +1,16 @@
 package com.exobank.auth.service;
 
-import com.exobank.auth.entity.Otp;
-// import com.exobank.auth.entity.User;
-import com.exobank.auth.repository.OtpRepository;
-import com.exobank.auth.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
+
+import org.springframework.stereotype.Service;
+
+import com.exobank.auth.entity.Otp;
+import com.exobank.auth.repository.OtpRepository;
+import com.exobank.auth.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,9 @@ public class OtpService {
             Otp lastOtp = existingOtp.get();
             if (lastOtp.getCreatedAt().isAfter(LocalDateTime.now().minusSeconds(60))) {
                 throw new RuntimeException("Please wait at least 1 minute before requesting another OTP");
+            }
+            else {
+                System.out.println("Last OTP was created at: " + lastOtp.getCreatedAt());
             }
         }
 

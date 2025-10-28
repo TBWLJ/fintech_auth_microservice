@@ -108,7 +108,9 @@ public class AuthController {
             String newRefresh = refreshTokenService.createRefreshToken(user, null).getToken();
 
             return ResponseEntity.ok(
-                Map.of("accessToken", newAccess, "refreshToken", newRefresh)
+                Map.of(
+                    "accessToken", newAccess,
+                    "refreshToken", newRefresh)
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());

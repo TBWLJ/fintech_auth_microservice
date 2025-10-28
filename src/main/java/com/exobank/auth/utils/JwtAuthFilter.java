@@ -1,12 +1,12 @@
 package com.exobank.auth.utils;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import java.util.List;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -35,7 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         try {
             String userId = jwtUtils.validateAndExtractUserId(token);
-
+            
             UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(userId, null, List.of());
 

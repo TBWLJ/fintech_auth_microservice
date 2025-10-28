@@ -16,7 +16,7 @@ The **Auth Microservice** is a core component of the fintech application respons
 
 ---
 
-## 🧱 Tech Stack
+## 🧱 Tech Stack<>
 
 - **Java 21 / JDK 23**
 - **Spring Boot**
